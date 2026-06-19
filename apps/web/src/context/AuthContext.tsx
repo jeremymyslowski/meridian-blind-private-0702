@@ -1,5 +1,6 @@
-import { createContext, useContext, useMemo, useState, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { MeridianClient, type User } from '@meridian/api-client'
+import { TOKEN_TTL_MS } from '../config/session'
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
 const TOKEN_KEY = 'meridian_token'
@@ -42,6 +43,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem(TOKEN_KEY)
     localStorage.removeItem(USER_KEY)
   }
+
+  useEffect(() => {
+    if (!token) return
+    const timer = setTimeout(() => logout(), TOKEN_TTL_MS)
+    return () => clearTimeout(timer)
+  }, [token])
 
   return (
     <AuthContext.Provider
