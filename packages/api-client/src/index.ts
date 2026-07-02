@@ -205,6 +205,12 @@ export class MeridianClient {
     });
   }
 
+  deleteTask(taskId: string) {
+    return this.request<void>(`/api/v1/tasks/${taskId}`, {
+      method: 'DELETE',
+    });
+  }
+
   listComments(taskId: string) {
     return this.request<Comment[]>(`/api/v1/tasks/${taskId}/comments`);
   }
