@@ -30,3 +30,12 @@ def get_user_by_email(db: connection, email: str) -> dict | None:
         )
         row = cur.fetchone()
     return dict(row) if row else None
+
+
+def get_user_display_name(db: connection, user_id: UUID) -> str:
+    """Return the user's name, or their email if name is empty."""
+    user = get_user_by_id(db, user_id)
+    name = user.get("name", "").strip()
+    if name:
+        return name
+    return user.get("email", "")
