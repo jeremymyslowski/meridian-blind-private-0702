@@ -1,6 +1,6 @@
 import { FormEvent, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams, useNavigate } from 'react-router-dom'
 import { Badge, Button, Card, Spinner } from '@meridian/ui-kit'
 import { useAuth } from '../context/AuthContext'
 import { useFeatureFlags } from '../hooks/useFeatureFlags'
@@ -11,6 +11,7 @@ export default function TaskDetailPage() {
   const { taskId } = useParams<{ taskId: string }>()
   const { client } = useAuth()
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
   const [commentBody, setCommentBody] = useState('')
   const { isEnabled } = useFeatureFlags()
 
@@ -60,6 +61,14 @@ export default function TaskDetailPage() {
     },
   })
 
+  const deleteTaskMutation = useMutation({
+    mutationFn: () => client.deleteTask(taskId!),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks', task?.project_id] })
+      navigate(`/projects/${task?.project_id}`)
+    },
+  })
+
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault()
     if (!commentBody.trim()) return
@@ -79,6 +88,22 @@ export default function TaskDetailPage() {
         <h1>{task.title}</h1>
         <Badge variant={task.status}>{task.status.replace('_', ' ')}</Badge>
       </div>
+
+      {canWrite && (
+        <div style={{ margin: '1rem 0' }}>
+          <Button
+            variant="secondary"
+            onClick={() => {
+              if (window.confirm('Are you sure you want to delete this task? This cannot be undone.')) {
+                deleteTaskMutation.mutate()
+              }
+            }}
+            disabled={deleteTaskMutation.isPending}
+          >
+            {deleteTaskMutation.isPending ? 'Deleting...' : 'Delete Task'}
+          </Button>
+        </div>
+      )}
 
       {task.description && (
         <p className="task-description">{task.description}</p>
